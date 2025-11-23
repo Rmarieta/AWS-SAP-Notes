@@ -18,22 +18,23 @@
 
 ## RAM Concepts
 
-- **Owner account**: 
-    - Owns the resource, creates a share, provides the name
-    - Retains full permission over the resource shared
-    - Defines the principal (AWS account, OU, entire AWS organization) with whom they share a specific resource
+- **Owner account**:
+  - Owns the resource, creates a share, provides the name
+  - Retains full permission over the resource shared
+  - Defines the principal (AWS account, OU, entire AWS organization) with whom they share a specific resource
 - **Principle**:
-    - It can be an AWS account, OU, entire AWS organization
-    - Resources are shared with a principle
-- If the participant is inside an ORG with the sharing enabled, sharing is accepted automatically
+  - It can be an AWS account, OU, entire AWS organization
+  - Resources are shared with a principle
+- If the participant is inside an ORG that has sharing enabled, sharing is accepted automatically
 - For non ORG accounts, or sharing with AWS Organizations is not enabled, we have to accept an invite
 
 ## Shared Services VPC
 
 - It is a VPC which provides infrastructure which can be used by other services
 - In AWS this has been traditionally architected using separate networks connected using VPC peering or Transit Gateways. With AWS RAM and AWS Organizations we can create something which is more effective:
-    ![Shared Services VPC](images/RAM.png)
+  ![Shared Services VPC](images/RAM.png)
 - VPC owner can create and manage the VPC and subnets which are shared with participants of the same AWS Organization
 - Participants can provision services into the shared subnets, can read an reference network objects but can not modify or delete the subnets
 - Resources created by a participant account will not be visible for other participants or by the VPC owner account
 - Resources created by a participant account can be accessed from other resources created by other participant accounts because they are on the same network
+- VPC owners cannot delete or modify resources created by participant VPCs

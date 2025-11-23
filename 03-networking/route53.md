@@ -27,9 +27,13 @@
 
 - It is a managed DNS product
 - Provides 2 main services:
-    - Register domains
-    - Can host zone files on managed nameservers
+  - Register domains
+  - Can host zone files on managed nameservers
 - It is a global service, its database is distributed globally and resilient
+
+## Register a Domain
+
+![R53 Register](images/Route53Register.png)
 
 ## Hosted Zones
 
@@ -63,20 +67,22 @@
 - When a public hosted zone is created, R53 allocates 4 public name servers for it, on these name servers the zone file is hosted
 - We use NS records to point at these name servers to be able to connect to the global DNS
 - Externally registered domains can point to R53 public zone
+- From within VPC, all DNS queries (private or public) first go to the resolver AmazonProvidedDNS, is available at VPC CIDR base + 2. If query is for a public domain, the AmazonProvidedDNS resolver walks the public DNS tree and returns the NS record.
 
 ## Private Hosted Zones
 
 - Similar to a public hosted zone except it can not be accessed from the public internet
 - They are associated with VPCs from AWS and it only can be shared with VPCs from the account. Cross account access is possible
-- Split-view (Split Horizon) DNS: it is possible to create split-view (split-horizon) DNS for public and internal use with the same zone name. Useful for accessing systems from the private network without accessing the public internet
+- Split-view (Split Horizon) DNS: it is possible to create split-view (split-horizon) DNS for public and internal use with the same zone name. Useful for accessing systems from the private network without accessing the public internet.
+- Since only from within VPC => resolved by AmazonProvidedDNS
 
 ## CNAME vs Alias Records
 
 - The problem with CNAME:
-    - An A record maps a NAME to an IP Address
-    - A CNAME records maps a NAME to another NAME
-    - We can not have a CNAME record for an APEX/naked domain name
-    - Many AWS services use DNS Name (example: ELBs)
+  - An A record maps a NAME to an IP Address
+  - A CNAME records maps a NAME to another NAME
+  - **We can not have a CNAME record for an APEX/naked domain name (for ex, this is not allowed with DNS standards: CNAME rmarieta.click => ALB hostname), so Alias records solve that problem.**
+  - Many AWS services use DNS Name (example: ELBs)
 - For the APEX domain to point to another domain, we can use ALIAS records
 - An alias record maps a NAME to an AWS resource
 - Can be used for both apex and normal records
@@ -85,10 +91,9 @@
 
 ## Simple Routing
 
-- With simple routing with can create one record per name
-- Each record can have multiple values
-- In case of a request, all the values for the record are returned to the client
-- The client choses one of the values an connects to the server
+- Each DNS record can have multiple values for a NAME (for ex A record with 4 IPs)
+- With simple routing, in case of a request: all the values for the record are returned to the client in a random order
+- The client chooses one of the values and connects to the server
 - Limitations: does not support health checks!
 
 ## Health Checks
@@ -102,9 +107,9 @@
 - In case of string matching the text should be present entirely in the first 5120 characters of the request body or the endpoint fails the health check
 - Based on the health checks the service can be categorized as `Healthy` or `Unhealthy`
 - Health checks can be of 3 types:
-    - Endpoint: assess the health of an endpoint we specify
-    - CloudWatch Alarm Checks: they react to CloudWatch alarms
-    - Calculated Checks: checks of other checks
+  - Endpoint: assess the health of an endpoint we specify
+  - CloudWatch Alarm Checks: they react to CloudWatch alarms
+  - Calculated Checks: checks of other checks
 - If 18%+ of the health checkers report the target as healthy, the target is considered healthy
 
 ## Failover Routing
@@ -149,10 +154,10 @@
 - When the user does a query, an IP checks verifies the location is the user
 - Geolocation does not return the closest record, it returns relevant records: when the resolution happens, the location of the user is cross-checked with the location specified for the records and the matching on is returned
 - Order of the cross-checks is the following:
-    1. R53 checks the state (US only)
-    2. R53 checks the country
-    3. R53 checks the continent
-    4. Returns default if not previous match
+  1. R53 checks the state (US only)
+  2. R53 checks the country
+  3. R53 checks the continent
+  4. Returns default if not previous match
 - If no match is detected, the a `NO ANSWER` is returned
 - Geolocation is ideal for restricting content based on the location of the user
 - It can be used for load-balancing based on user location as well
@@ -161,9 +166,9 @@
 
 - Geoproximity aims to provide records as close to the customer as possible, aims to calculated the distance between to resource and customer and return the record with the lower one
 - When using geoproximity, we define rules:
-    - Region the resource is created in, if it is an AWS resource
-    - Lat/lon coordinate for external resources
-    - Bias: adjust how R53 calculates the distance between the user and the resource
+  - Region the resource is created in, if it is an AWS resource
+  - Lat/lon coordinate for external resources
+  - Bias: adjust how R53 calculates the distance between the user and the resource
 - Geoproximiy allows defining a bias: it can be a `+` or `-` bias, increasing or decreasing the region size. We can influence the routing distance based on this bias
 
 ## Route53 Interoperability
@@ -171,16 +176,16 @@
 - Route53 acts as a domain registrar and as a domain hosting
 - We can also register domains using other external services
 - Steps happening when we register a domain using R53:
-    - R53 accepts the registration fee
-    - Allocates 4 Name Servers
-    - Creates a zone file (domain hosting) on the NS
-    - R53 communicates with the registry of the top level domain and adds the address of the 4 NS for the given domain
+  - R53 accepts the registration fee
+  - Allocates 4 Name Servers
+  - Creates a zone file (domain hosting) on the NS
+  - R53 communicates with the registry of the top level domain and adds the address of the 4 NS for the given domain
 - Route53 acting as a registrar only:
-    - We pay for the domain for Route53 but the name servers are allocated by other entity
-    - We have to allocate the name servers to Route53 which will communicate with the top level domain registry
+  - We pay for the domain for Route53 but the name servers are allocated by other entity
+  - We have to allocate the name servers to Route53 which will communicate with the top level domain registry
 - Using Route53 for hosting only:
-    - Generally used for existing domains. The domain is registered at third party
-    - We create a hosted zone inside R53 and provide the address of the name servers to the third party
+  - Generally used for existing domains. The domain is registered at third party
+  - We create a hosted zone inside R53 and provide the address of the name servers to the third party
 
 ## Implementing DNSSEC with Route53
 
@@ -206,18 +211,18 @@
 - In every subnet the .2 is reserved for Route53 resolver
 - Via this address VPC resources can access R53 Public and associated private hosted zones
 - Route53 resolver is only accessible from the VPC, hybrid network integration is problematic both inbound and outbound
-![Isolated DNS Environments](images/Route53Endpoints1.png)
+  ![Isolated DNS Environments](images/Route53Endpoints1.png)
 - Solution to the problem before Route53 endpoints were introduced:
-![Before Route53 Endpoints](images/Route53Endpoints2.png)
+  ![Before Route53 Endpoints](images/Route53Endpoints2.png)
 - Route53 endpoints:
-    - Are deliver as VPC interfaces (ENIs) which can be accessed over VPN or DX
-    - 2 different type of endpoints:
-        - Inbound: on-premises can forward request to the R53 resolver
-        - Outbound: interfaces in multiple subnets used to contact on-premises DNS
-        - Rules control what requests are forwarded
-        - Outbound endpoints have IP addresses assigned which can be whitelisted on-prem
+  - Are deliver as VPC interfaces (ENIs) which can be accessed over VPN or DX
+  - 2 different type of endpoints:
+    - Inbound: on-premises can forward request to the R53 resolver
+    - Outbound: interfaces in multiple subnets used to contact on-premises DNS
+    - Rules control what requests are forwarded
+    - Outbound endpoints have IP addresses assigned which can be whitelisted on-prem
 - Route53 endpoint architecture:
-![Route53 Endpoints Architecture](images/Route53Endpoints3.png)
+  ![Route53 Endpoints Architecture](images/Route53Endpoints3.png)
 - Route53 endpoints are delivered as a service
 - They are HA and they scale automatically based on load
 - They can handle around 10k queries per second per endpoint
