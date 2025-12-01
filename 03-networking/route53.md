@@ -89,6 +89,19 @@
 - There is no additional charge for alias requests pointing at AWS resources
 - An alias is a subtype, we can have an A record alias and a CNAME record alias
 
+## Route 53 Routing Policies
+
+Available routing policies:
+
+- Simple Routing
+- Failover Routing
+- Multivalue Routing
+- Weighted Routing
+- Latency-based Routing
+- Geolocation Routing
+- Geoproximity Routing
+- IP-based Routing
+
 ## Simple Routing
 
 - Each DNS record can have multiple values for a NAME (for ex A record with 4 IPs)
@@ -127,21 +140,22 @@
 - When queried, 8 records are returned to the client. If more than 8 records are present, 8 records will be randomly selected and returned
 - The client picks one a of the values and connects to the service
 - Any records which fails the health checks won't be returned when queried
-- Multi value routing is not a substitute for an actual load balancer
+- Multi value routing is not a substitute for an actual load balancer (no SSL termination, no perfect distribution, no path routing, etc).
 
 ## Weighted Routing
 
-- Weighted Routing can be used when looking for a simple form of load balancing or when we want to test new versions of an API
+- Weighted Routing can be used when looking for a simple form of load balancing or when we want to test new versions of an API (canary deployments => for ex new app only to 10% of users)
 - With weighted routing we can specify a weight for each record
 - For a given name the total of weight is calculated. Each record is returned depending on the percentage of the record compared to the total weight
 - Setting a weight to 0, the record will not be returned. If every record is set to 0, all of them will be returned
-- Weighted routing can be combined with health checks. Health checks don't remove records from the calculation of the total weight. If a record is selected, but it is unhealthy, another selection will be made until a healthy record is selected
+- Weighted routing can be combined with health checks.
+- **Health checks don't remove records** from the calculation of the total weight. If a record is selected, but it is unhealthy, another selection will be made until a healthy record is selected
 
 ## Latency-Based Routing
 
 - Should be used when we trying to optimize for performance and better user experience
 - For each record we can specify an region
-- AWS maintains a list of latencies for each region from the world (source - destination latency)
+- AWS maintains a list of latencies from user locations to each AWS region (user DNS resolver location <=> destination latency)
 - When a request comes in, it will be directed to the lowest latency destination based on the location from where the request is coming from
 - Latency-based routing can be combined with health checks. If the lowest latency record fails, the second lowest latency record will be returned to the client
 - The latency database maintained by AWS is not updated in real time
@@ -150,26 +164,36 @@
 
 - Geolocation routing is similar to latency-based routing, only instead of latency the location of customer and resources is used to determine the resolution decisions
 - When we create records, we tag the records with a location
-- This location is generally a country (ISO2 code), continent or default. There can be also a subdivision, in USA we can tag records with a state
+- This location is generally a country (ISO2 code), continent or default (optional). There can be also a subdivision, in USA we can tag records with a state
 - When the user does a query, an IP checks verifies the location is the user
-- Geolocation does not return the closest record, it returns relevant records: when the resolution happens, the location of the user is cross-checked with the location specified for the records and the matching on is returned
+- Geolocation does not return the closest record, it returns relevant records: when the resolution happens, the location of the user IP is cross-checked with the location specified for the records and the matching on is returned
+- User location normally = Resolver location
 - Order of the cross-checks is the following:
-  1. R53 checks the state (US only)
+  1. R53 checks the state (US & Ukraine only)
   2. R53 checks the country
   3. R53 checks the continent
-  4. Returns default if not previous match
-- If no match is detected, the a `NO ANSWER` is returned
-- Geolocation is ideal for restricting content based on the location of the user
-- It can be used for load-balancing based on user location as well
+  4. Returns default (optional) if no previous match
+- If no match is detected, then a `NO ANSWER` is returned
+- Geolocation is ideal for **restricting** content based on the location of the user:
+  - Load balancing across regional endpoints
+  - Regional restrictions
+  - Language specific content
+- **NOT about proximity**
 
 ## Geoproximity Routing
 
-- Geoproximity aims to provide records as close to the customer as possible, aims to calculated the distance between to resource and customer and return the record with the lower one
-- When using geoproximity, we define rules:
-  - Region the resource is created in, if it is an AWS resource
-  - Lat/lon coordinate for external resources
-  - Bias: adjust how R53 calculates the distance between the user and the resource
-- Geoproximiy allows defining a bias: it can be a `+` or `-` bias, increasing or decreasing the region size. We can influence the routing distance based on this bias
+- Geoproximity aims to provide records as close to the customer as possible, aims to calculate the distance between the resource and customer IP and return the record with the smallest one
+- 3 location types with Geoproximity records:
+  - Region: an AWS region. Distance is computed between the client IP and the centre of the region
+  - Lat/lon coordinates. Distance is computed with that coordinate
+  - Local zone: AWS local zone location.
+- A Geoproximity record allows defining a bias (between -99 <=> +99), increasing or decreasing the region size. We can influence the routing distance based on this bias
+
+## IP-based Routing
+
+- Chooses the DNS response based on the source IP of the client mapped to a CIDR block
+- If client has IP in CIDR A => return record A
+- If client has IP in CIDR B => return record B
 
 ## Route53 Interoperability
 
@@ -195,7 +219,11 @@
 - These keys need to be in us-east-1
 - Next, R53 creates the zone-signing keys (ZSK) internally
 - Next, R53 adds the KSK and zone-signing key public parts into a DNS key record within the hosted zone, this tells every DNSSEC resolver which public keys to use to verify signatures on any other records
-- The private key signing key used to sign those DNS key records and create the RRSIG and DNSKEY records
+- The private key signing key used to sign those DNS key records and create new records:
+  - (Child) DNSKEY record 256 = public ZSK
+  - (Child) DNSKEY record 257 = public KSK
+  - (Child) RRSIG = Signed RRSET (ex: group of A records with same name), signed by ZSK for all RRSETs except DNSKEY, signed by KSK.
+  - (Parent) DS record (Delegate Signer) = hash of child's public KSK
 - At this point signing is configured (step 1)
 - Next, R53 has to establish the chain of trust with the parent zone
 - The parent zone needs ot add a DS record, which is hash of the public part of the KSK
@@ -204,6 +232,16 @@
 - Once done, the top level domain will trust this domain with the delegated sign record (DS)
 - The domain zone will sign each record either with the KSK or with the ZSK
 - When enabling DNSSEC we should make sure we configure CloudWatch Alarms, specifically create alarms for `DNSSECInternalFailure` and `DNSSECKeySigningKeyNeedingAction`, both of these need urgent intervention
+
+Useful commands:
+
+- `dig click NS +short` returns the Nameservers DNS names for the TLD
+- `dig rmarieta.click DS @<ns-name>` returns the DS records with name rmarieta.click in the specified NS
+- `dig rmarieta.click NS +short` returns the Nameservers from R53 for the hosted zone rmarieta.click
+- `dig rmarieta.click A @<ns-name>` returns the a records defined in the hosted zone with name rmarieta.click
+- `dig rmarieta.click A +dnssec` returns the DNSsec records along with the A record
+
+![DNS Sec](images/DNSSec.png)
 
 ## Advanced VPC DNS and DNS Endpoints
 
