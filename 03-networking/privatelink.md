@@ -98,3 +98,7 @@ Interface:
 
 - Work like normal IAM policies:
   ![Endpoint policy](images/EndpointPolicy.png)
+
+## Demo: Restricting Access to S3 Content
+
+![S3 Restriction with Endpoint](images/S3EndpointRestrict.png)
