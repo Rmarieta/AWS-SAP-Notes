@@ -20,21 +20,23 @@
   - Can be used to detect a growing list of common sensitive data types: credentials, financial data, health data, personal identifiers (addresses, passport nb, etc.)
 - **Custom Data Identifiers**:
   - Can be created by us, AWS account users/owners
-  - They are using regex patterns to match data
-  - We can add optional keywords: optional sequences that need to be in the proximity to regex match
+  - Regex: define patterns to match in data
+  - Keywords: optional sequences that need to be in proximity to regex match
   - Maximum Match Distance: how close keywords are to regex pattern
-  - We can also include ignore words
+  - Ignore Words: We can also include ignore words in the regex match
 
 ## Macie Findings
 
 - Macie will produce 2 types of findings:
+
   - **Policy Findings**: are generated when the policies or settings are changed in a way that reduces the security of the bucket after Macie is enabled
   - **Sensitive Data Findings**: generated when sensitive data is identified based on identifiers
+
 - Types of policy findings:
   - `Policy:IAMUser/S3BlockPublicAccessDisabled`: all bucket-level block public access settings were disabled for the bucket
   - `Policy:IAMUser/S3BucketEncryptionDisabled`: default encryption settings for the bucket were reset to default Amazon S3 encryption behavior, which is to encrypt new objects automatically with an Amazon S3 managed key
   - `Policy:IAMUser/S3BucketPublic`: an ACL or bucket policy for the bucket was changed to allow access by anonymous users or all authenticated AWS Identity and Access Management (IAM) identities
-  - `Policy:IAMUser/S3BucketSharedExternally`: an ACL or bucket policy for the bucket was changed to allow the bucket to be shared with an AWS account that's external to (not part of) your organization
+  - `Policy:IAMUser/S3BucketSharedExternally`: an ACL or bucket policy for the bucket was changed to allow the bucket to be shared with an AWS account that's not part of your organization
 - Types of sensitive data findings:
   - `SensitiveData:S3Object/Credentials`: object contains sensitive credentials data, such as AWS secret access keys or private keys
   - `SensitiveData:S3Object/CustomIdentifier`: object contains text that matches the detection criteria of one or more custom data identifiers
