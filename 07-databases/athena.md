@@ -11,3 +11,7 @@
 - It is preferred for querying AWS logs: VPC Flow Logs, CloudTrail, ELB logs, cost reports, etc.
 - Can query data form Glue Data Catalog and Web Server Logs
 - Athena Federated Query: Athena now supports querying other data sources than S3. Requires a data source connector (AWS Lambda)
+
+![Athena](images/Athena.png)
+
+![AthenaDemo](images/AthenaDemo.png)
