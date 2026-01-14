@@ -41,7 +41,11 @@
   - **Core nodes**: cluster can have many core nodes. They run the jobs. They are also used for tracking task, we don't want to destroy these nodes (no spot instances)
   - Core nodes also manage the HDFS storage for the cluster. The lifetime of HDFS is linked to the lifetime of the core nodes/cluster
   - **Task nodes**: used to only run tasks. If they are terminated, the HDFS storage is not affected. Ideally we use spot instances for task nodes
-  - EMRFS: file system backed by S3, can persist beyond the lifetime of the cluster. Offers lower performance than HDFS, which is based on local volumes
+  - Storage sources:
+    - HDFS
+    - EMRFS: file system backed by S3, can persist beyond the lifetime of the cluster. Offers lower performance than HDFS, which is based on local volumes
+    - JDBC sources
+    - DynamoDB
 
 ## Amazon EMR Serverless
 

@@ -3,47 +3,57 @@
 - Lambda is a Function-as-a-Service (FaaS) product. We provide specialized short running focused code for Lambda and it will take care running it and billing us for only what we consume
 - Every Lambda function uses a supported runtime, example: Python 3.8, Java 8, NodeJS
 - Every Lambda function is loaded into an executed in a runtime environment
-- When we create a function we define the resources the function will use. We define the memory directly and CPU usage allocation indirectly (based on the amount of memory)
+- When we create a function we define the resources the function will use:
+  - We define the memory directly
+  - And CPU usage allocation indirectly (based on the amount of memory)
 - We are only billed for the duration the function is running based on the number of invocations and the resources specified
 - Lambda is a key part of serverless architectures in AWS
 - Lambda has support for the following runtimes:
-    - Python
-    - Ruby
-    - Go
-    - Java
-    - C#
-    - Custom using Lambda layers (such as Rust)
+  - Python
+  - Ruby
+  - Go
+  - Java
+  - C#
+  - Custom using Lambda layers (such as Rust)
 - Lambda deployment package size:
-    - 50 MB zipped
-    - 250 MB unzipped
-    - Up to 10 GB as a Docker image
+  - 50 MB zipped
+  - 250 MB unzipped
+  - Up to 10 GB as a Docker image
 - Lambda functions are stateless, meaning there is no data left over after an invocation
-- When creating a Lambda function we define the memory. The memory can be between 128 MB and 10240 MB in 1 MB steps
+- When creating a Lambda function we define the memory. The memory can be between 128 MB - 10240 MB in 1 MB steps
 - We do not directly define the vCPU allocated to each function, it will automatically scale with the memory: 1769 MB of memory gives 1 vCPU
-- The runtime env. has a 512 MB (by default) storage available as `/tmp`. We can scale this storage up to 10240 MB. We can use this storage for whatever we need as long as we assume that it is blank at each execution of the function
-- Lambda function can run up to 15 minutes, after this a timeout will occur
+- The runtime env has a 512 MB (by default) storage available as `/tmp`. We can scale this storage up to 10240 MB. We can use this storage for whatever we need as long as we assume that it is empty at each execution of the function
+- Lambda function can run for **up to 15 minutes**, after this a timeout will occur
 - The security for a Lambda function is controlled by the execution role. This is an IAM role attached to the function. This can have permissions for integration with other AWS services
+- Common uses:
+  - Serverless applications (S3, API Gateway, Lambda)
+  - File processing (S3, S3 Events, Lambda)
+  - Database triggers (DynamoDB, Streams, Lambda)
+  - Serverless CRON (EventBridge, CW Events, Lambda)
+  - Realtime Stream Data Processing (Kinesis, Lambda)
+
+![Lambda-1](images/Lambda-1.png)
 
 ## Lambda Networking
 
 - Lambda functions can have 2 types of networking modes:
-    - Public (default):
-        - Lambda can access public AWS services such as SQS, DynamoDB, etc. and also internet based services
-        - Lambda has network connectivity to public services running on the internet
-        - Offers the best performance for Lambda, no customer specific networking is required
-        - With public networking mode Lambda function wont be able to access resources in a VPC unless the resources do have public IPs and security controls allow external access
-    - VPC Networking:
-        - Lambda functions will run inside a VPC, so they will access everything in a VPC, assuming NACLs and SGs allow access
-        - They wont be able to access services outside of the VPC, unless networking configuration exists in the VPC to allow external access
-        - The Lambda needs `EC2Networking` permissions in order ot be able to create ENIs in the VPC
-        - VPC based Lambda functions do not directly in the VPC, they will use a shared ENI to access resources in the VPC as long as all the functions have the same Security Group. In case new Security Groups are attached to a certain Lambda, new ENIs are placed inside the VPC
-        - At the creation of the function, a certain ENI might be created for accessing the VPC. The initial setup would take up to 90 seconds. This setup will take place only once, not at every invocation
+  - Public (default):
+    - Lambda can access public AWS services such as SQS, DynamoDB, etc. and also internet based services
+    - Lambda has network connectivity to public services running on the internet
+    - Offers the best performance for Lambda, no customer specific networking is required
+    - With public networking mode Lambda function wont be able to access resources in a VPC unless the resources do have public IPs and security controls allow external access
+  - VPC Networking:
+    - Lambda functions will run inside a VPC, so they will access everything in a VPC, assuming NACLs and SGs allow access
+    - They wont be able to access services outside of the VPC, unless networking configuration exists in the VPC to allow external access
+    - The Lambda needs `EC2Networking` permissions in order ot be able to create ENIs in the VPC
+    - VPC based Lambda functions do not directly in the VPC, they will use a shared ENI to access resources in the VPC as long as all the functions have the same Security Group. In case new Security Groups are attached to a certain Lambda, new ENIs are placed inside the VPC
+    - At the creation of the function, a certain ENI might be created for accessing the VPC. The initial setup would take up to 90 seconds. This setup will take place only once, not at every invocation
 
 ## Lambda Security
 
 - There are 2 key parts of the security model
-    - Lambda Functions will assume an execution role in order to access other AWS resources
-    - Resource policies: similar to resource policies for S3. Allows external accounts to invoke a Lambda functions, or certain services to use Lambda functions. Resources polices can be modified using the CLI/API (currently cannot be changed with the console)
+  - Lambda Functions will assume an execution role in order to access other AWS resources
+  - Resource policies: similar to resource policies for S3. Allows external accounts to invoke a Lambda functions, or certain services to use Lambda functions. Resources polices can be modified using the CLI/API (currently cannot be changed with the console)
 
 ## Lambda Logging
 
@@ -56,22 +66,22 @@
 ## Lambda Invocations
 
 - There are 3 ways Lambda functions can be invoked:
-    - **Synchronous invocation**:
-        - Command line or API directly invoking the function
-        - The CLI or API will wait until the function returns
-        - API Gateway will also invoke Lambdas synchronously, use case for many serverless applications
-        - Any errors or retries have to be handled on the client side
-    - **Asynchronous invocation**:
-        - Used typically when AWS services invoke the function (example: S3 events)
-        - The service will not wait for the response (fire and forget)
-        - Lambda is responsible for any failure. Reprocessing will happen between 0 and 2 times
-        - The function should be idempotent in order to be rerun
-        - Lambda can be configured to send events to a DLQ in case of the processing did not succeed after the number of retries
-        - Destination: events processed by Lambdas can be delivered to destinations like SQS, SNS, other Lambda, EventBride. Success and failure events can be sent to different destinations
-    - **Event Source mapping**:
-        - Typically used on streams or queues which don't generate events (Kinesis, DynamoDB streams, SQS)
-        - Event Source mappers polls these streams and retrieves batches. These batches can be broken in pieces and sent to multiple Lambda invocations for processing
-        - We can not have a partially successful batch, either everything works or nothing works
+  - **Synchronous invocation**:
+    - Command line or API directly invoking the function
+    - The CLI or API will wait until the function returns
+    - API Gateway will also invoke Lambdas synchronously, use case for many serverless applications
+    - Any errors or retries have to be handled on the client side
+  - **Asynchronous invocation**:
+    - Used typically when AWS services invoke the function (example: S3 events)
+    - The service will not wait for the response (fire and forget)
+    - Lambda is responsible for any failure. Reprocessing will happen between 0 and 2 times
+    - The function should be idempotent in order to be rerun
+    - Lambda can be configured to send events to a DLQ in case of the processing did not succeed after the number of retries
+    - Destination: events processed by Lambdas can be delivered to destinations like SQS, SNS, other Lambda, EventBride. Success and failure events can be sent to different destinations
+  - **Event Source mapping**:
+    - Typically used on streams or queues which don't generate events (Kinesis, DynamoDB streams, SQS)
+    - Event Source mappers polls these streams and retrieves batches. These batches can be broken in pieces and sent to multiple Lambda invocations for processing
+    - We can not have a partially successful batch, either everything works or nothing works
 - In case of event processing in async invocation, in order to process the event we don't explicitly need rights to read from the sender
 - In case of event source mapping the event source mapper is reading from the source. The event source mapping uses permissions from the Lambda execution role to access the source service
 - Even if the function does not read data directly from the stream, the execution role needs read rights in order to handle the event batch
@@ -101,19 +111,19 @@
 - Lambda function executions have life cycles
 - The function code runs inside an execution environment
 - Lifecycle phases:
-    - `INIT`: creates or unfreezes the execution environment
-        - It has the following sub-components:
-            - `EXTENSION INIT`
-            - `RUNTIME INIT`
-            - `FUNCTION INIT`
-        - Init phase runs only at cold-starts
-    - `INVOKE`: runs the function handler (cold start)
-    - `NEXT INVOKE`(s): warm start using the same environment
-    - `SHUTDOWN`: execution environment is terminated after a period of inactivity
-        - It has the following sub-components:
-            - `RUNTIME SHUTDOWN`
-            - `EXTENSION SHUTDOWN`
-        - We can use Provisioned Concurrency to avoid having a cold-start in case the Lambda should be terminated
+  - `INIT`: creates or unfreezes the execution environment
+    - It has the following sub-components:
+      - `EXTENSION INIT`
+      - `RUNTIME INIT`
+      - `FUNCTION INIT`
+    - Init phase runs only at cold-starts
+  - `INVOKE`: runs the function handler (cold start)
+  - `NEXT INVOKE`(s): warm start using the same environment
+  - `SHUTDOWN`: execution environment is terminated after a period of inactivity
+    - It has the following sub-components:
+      - `RUNTIME SHUTDOWN`
+      - `EXTENSION SHUTDOWN`
+    - We can use Provisioned Concurrency to avoid having a cold-start in case the Lambda should be terminated
 
 ## Lambda Versions and Aliases
 
@@ -163,16 +173,16 @@
 - When the ALB receives a request from the client it synchronously invokes the Lambda function
 - The LB passes in a JSON structure to the Lambda function, inside the `Event` structure. This has to be interpreted by the Lambda. What actually happens is that the LB translates the HTTP(S) request to a Lambda compatible event, to which the Lambda answers with a JSON object that gets translated back to HTTP/HTTPS response
 - Multi-Value headers:
-    - For an example lets us this URL for the Lambda: http://catagram.io?&search=roffle&search=winkie
-    - Without multi-value headers the Lambda receives the following:
-        ```
-        "queryStringParameters": {
-            "search": "winkie"
-        }
-        ```
-    - If the multi-value headers are enabled, we get this delivered to Lambda:
-        ```
-        "multiValueQueryStringParameters": {
-            "search": ["roffle", "winkie"]
-        }
-        ```
+  - For an example lets us this URL for the Lambda: http://catagram.io?&search=roffle&search=winkie
+  - Without multi-value headers the Lambda receives the following:
+    ```
+    "queryStringParameters": {
+        "search": "winkie"
+    }
+    ```
+  - If the multi-value headers are enabled, we get this delivered to Lambda:
+    ```
+    "multiValueQueryStringParameters": {
+        "search": ["roffle", "winkie"]
+    }
+    ```

@@ -8,17 +8,19 @@
 - A publisher sends messages to a topic
 - Topics can have subscribers which will receive messages from a topic
 - Supported subscribers are:
-    - HTTP(s)
-    - Email (JSON)
-    - SQS queues
-    - Mobile Push Notifications
-    - SMS messages
-    - Lambda Functions
+  - HTTP(s)
+  - Email (JSON)
+  - SQS queues
+  - Mobile Push Notifications
+  - SMS messages
+  - Lambda Functions
 - SNS is used across AWS for notifications, example CloudWatch uses it extensively
 - It is possible to apply filters to a subscriber
 - Fan-out architecture: single topic with multiple SQS queue subscribers
-- SNS offers delivery status for supported subscribers which are HTTP, Lambda and SQS
+- SNS offers delivery status for supported subscribers: HTTP, Lambda and SQS
 - SNS supports delivery retries
-- SNS it is a HA and scalable service within a region
+- SNS is a HA and scalable service within a region
 - SNS supports Server Side Encryption (SSE)
 - We can use cross-account access to a topic via topic policies
+
+![SNS](images/SNS.png)
