@@ -11,13 +11,16 @@
   - Each split can be assigned to a mapper
   - The mapper perform the operation at scale
   - The data is recombined after the operation is completed
-- HDFS (Hadoop File System):
+- **Apache Hadoop**: framework for storing and processing massive datasets across clusters of compute nodes
+- **HDFS (Hadoop File System)**:
   - Traditionally stored across multiple data nodes
   - Highly fault-tolerant - data is replicated between nodes
   - Named Nodes: provide the namespace for the file system and controls access to HDFS
   - Block: a segment of data in HDFS, generally 64 MB
 
 ![MapReduce1](images/MapReduce1.png)
+
+![MapReduce1-2](images/MapReduce1-2.png)
 
 ![MapReduce2](images/MapReduce2.png)
 
@@ -28,15 +31,15 @@
 - Is a managed implementation of Apache Hadoop, which is a framework for handling big data workloads
 - EMR includes other elements such as Spark, HBase, Presto, Flink, Hive, Pig
 - EMR can be operated long term, or we can provision ad-hoc (transient) clusters for short term workloads
-- EMR runs in one AZ only within a VPC using EC2 for compute
+- EMR runs in one AZ only within a VPC using EC2 for compute => NOT HA (but resilient to hardware failure)
 - It can use spot instances, instance fleets, reserved and on-demand instances as well
-- EMR is used for big data processing, manipulation, analytics, indexing, transformation, etc.
+- EMR is used for **big data processing, manipulation, analytics, indexing, transformation, and more**
 - EMR architecture:
   ![EMR architecture](images/EMRArchitecture.png)
   - Each cluster requires at least one **master node**. This manages the cluster and distributes workloads and acts as the NAME node within MapReduce (we SSH into this if necessary)
   - Historically we could have only one master node, nowadays we can have 3 master nodes
-  - **Core nodes**: cluster can have many core nodes. They are used for tracking task, we don't want to destroy these nodes
-  - Core nodes also managed to HDFS storage for the cluster. The lifetime of HDFS is linked to the lifetime of the core nodes/cluster
+  - **Core nodes**: cluster can have many core nodes. They run the jobs. They are also used for tracking task, we don't want to destroy these nodes (no spot instances)
+  - Core nodes also manage the HDFS storage for the cluster. The lifetime of HDFS is linked to the lifetime of the core nodes/cluster
   - **Task nodes**: used to only run tasks. If they are terminated, the HDFS storage is not affected. Ideally we use spot instances for task nodes
   - EMRFS: file system backed by S3, can persist beyond the lifetime of the cluster. Offers lower performance than HDFS, which is based on local volumes
 

@@ -55,6 +55,8 @@
 
 ## Kinesis Data Analytics
 
+Deprecated for **Amazon Managed Service for Apache Flink**
+
 - It is a real-time data processing product using SQL
 - The product ingests data from Kinesis Data Streams or Firehose
 - After the data is processed, it can be sent directly to destinations such as:
@@ -70,3 +72,5 @@
   - Time-series analytics: election data, e-sports
   - Real-time dashboards: leader boards for games
   - Real-time metrics
+
+![Kinesis Deprecation](images/KinesisDeprecation.png)
