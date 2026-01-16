@@ -49,11 +49,15 @@
     - VPC based Lambda functions do not directly in the VPC, they will use a shared ENI to access resources in the VPC as long as all the functions have the same Security Group. In case new Security Groups are attached to a certain Lambda, new ENIs are placed inside the VPC
     - At the creation of the function, a certain ENI might be created for accessing the VPC. The initial setup would take up to 90 seconds. This setup will take place only once, not at every invocation
 
+![LambdaNetworking](images/LambdaNetworking.png)
+
 ## Lambda Security
 
 - There are 2 key parts of the security model
   - Lambda Functions will assume an execution role in order to access other AWS resources
-  - Resource policies: similar to resource policies for S3. Allows external accounts to invoke a Lambda functions, or certain services to use Lambda functions. Resources polices can be modified using the CLI/API (currently cannot be changed with the console)
+  - Resource policies: similar to resource policies for S3. Allows external accounts to invoke a Lambda functions, or certain services to use Lambda functions. Resources polices can be modified using the CLI/API or the Console
+
+![LambdaSecurity](images/LambdaSecurity.png)
 
 ## Lambda Logging
 
@@ -71,6 +75,7 @@
     - The CLI or API will wait until the function returns
     - API Gateway will also invoke Lambdas synchronously, use case for many serverless applications
     - Any errors or retries have to be handled on the client side
+      ![SynchronousLambda](images/SynchronousLambda.png)
   - **Asynchronous invocation**:
     - Used typically when AWS services invoke the function (example: S3 events)
     - The service will not wait for the response (fire and forget)
@@ -78,10 +83,12 @@
     - The function should be idempotent in order to be rerun
     - Lambda can be configured to send events to a DLQ in case of the processing did not succeed after the number of retries
     - Destination: events processed by Lambdas can be delivered to destinations like SQS, SNS, other Lambda, EventBride. Success and failure events can be sent to different destinations
+      ![AsynchronousLambda](images/AsynchronousLambda.png)
   - **Event Source mapping**:
     - Typically used on streams or queues which don't generate events (Kinesis, DynamoDB streams, SQS)
     - Event Source mappers polls these streams and retrieves batches. These batches can be broken in pieces and sent to multiple Lambda invocations for processing
     - We can not have a partially successful batch, either everything works or nothing works
+      ![EventLambda](images/EventLambda.png)
 - In case of event processing in async invocation, in order to process the event we don't explicitly need rights to read from the sender
 - In case of event source mapping the event source mapper is reading from the source. The event source mapping uses permissions from the Lambda execution role to access the source service
 - Even if the function does not read data directly from the stream, the execution role needs read rights in order to handle the event batch
