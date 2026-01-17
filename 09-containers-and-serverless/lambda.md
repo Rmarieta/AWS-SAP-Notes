@@ -132,6 +132,8 @@
       - `EXTENSION SHUTDOWN`
     - We can use Provisioned Concurrency to avoid having a cold-start in case the Lambda should be terminated
 
+![Lambda Handler](images/LambdaHandler.png)
+
 ## Lambda Versions and Aliases
 
 - Unpublished functions can be changed and deployed
@@ -146,6 +148,10 @@
 - Aliases can be updated, changing which version they reference
 - Useful for PROD/DEV, BLUE/GREEN deployments, A/B testing
 - We can also use alias routing: sending a certain percentage of request to v1 and other percentage to v2. Both versions need the same role, same DLQ (or no DLQ) will be used and both versions need to be published
+
+![Lambda Versions](images/LambdaVersions.png)
+
+![Lambda Aliases](images/LambdaAliases.png)
 
 ## Lambda Environment Variables
 
