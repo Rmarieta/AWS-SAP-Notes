@@ -1,10 +1,10 @@
 # AWS DataSync
 
-- It is a data transfer service which allows data to be transferred into or out of AWS
+- It is a data transfer service which allows data to be transfered into or out of AWS
 - Can be used for workflows such as migrations, data processing transfers, archival, cost effective storage, DR/BC
 - Each agent can handle 10 Gbps transfer speed, each job can handle 15 million files
 - It also handles the transfer of metadata (permissions, timestamps)
-- It provides built in data validation
+- It provides built-in data validation
 
 ## Key Features
 
@@ -16,6 +16,8 @@
 - Service integration: S3, EFS, FSx, service-to-service transfer
 - Pay as you use service: per GB of data transferred
 - The DataSync agent runs on a virtualization platform such as VMWare
+
+![DataSync](images/DataSync.png)
 
 ## DataSync Components
 
