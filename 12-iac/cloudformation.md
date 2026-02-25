@@ -9,85 +9,103 @@
 - If a stack's template are changed, physical resources are changed as well
 - If a stack is deleted, normally the physical resources are deleted
 
+![CFN Resources](images/CFNResources.png)
+
 ## Stacks
 
 - A stack is a collection of AWS resources that you can manage as a single unit
 - All the resources in a stack are defined by the stack's CloudFormation template
 - Stack options:
-    - Tags: key/value pairs attached to the stack. Can be used to identify the stack for cost allocation purposes
-    - Permissions: IAM service role that can be assumed by CloudFormation
-    - Stack failure options:
-        - Specifies what to do if something fails while the stack is provisioned
-        - Options:
-            - Roll back all stack resources
-            - Preserve successfully provisioned resources
-    - Stack policy: defines the resources that we want to protect from unintentional updates during a stack update
-    - Rollback configuration: we can monitor the stack while it is being created/updated and we can roll it back in case a threshold is breached (example if any alarm goes to ALARM state)
-    - Notification options: we can specify an SNS topic where notifications should go
-    - Stack creation options: following options are included for stack creation, but aren't available as part of stack updates:
-        - Timeout: Specifies the amount of time, in minutes, that CloudFormation should allot before timing out stack creation operations
+  - Tags: key/value pairs attached to the stack. Can be used to identify the stack for cost allocation purposes
+  - Permissions: IAM service role that can be assumed by CloudFormation
+  - Stack failure options: specifies what to do if something fails while the stack is provisioned
+    - Options:
+      - Rollback all stack resources
+      - Preserve successfully provisioned resources
+  - Stack policy: defines the resources that we want to protect from unintentional updates during a stack update
+  - Rollback configuration: we can monitor the stack while it is being created/updated and we can roll it back in case a threshold is breached (example if any alarm goes to ALARM state)
+  - Notification options: we can specify an SNS topic where notifications should go
+  - Stack creation options: following options are included for stack creation, but aren't available as part of stack updates:
+    - Timeout: Specifies the amount of time, in minutes, that CloudFormation should allot before timing out stack creation operations
 
 ## Template Parameters and Pseudo Parameters
 
 - Template parameters allow input via the console, CLI or API when the stack is created or updated
 - Parameters are defined within the resources and they can be referenced from within the logical resources
 - Parameters can have default values, allowed values, min/max length, allowed patterns, no echo (useful for passwords, the value is not displayed when typed) and types
-- Pseudo Parameters: 
-    - AWS makes available parameters which can be referenced by the CF template
-    - Example:
-        - `AWS::Region`
-        - `AWS::StackId`
-        - `AWS::StackName`
-        - `AWS::AccountId`
-    - Pseudo parameters are parameters which can not be populated by us, they are populated by AWS and provided for us to reference them
+
+  ![Parameters](images/Parameters.png)
+
+- Pseudo Parameters:
+  - AWS makes available parameters which can be referenced by the CF template
+  - Example:
+    - `AWS::Region`
+    - `AWS::StackId`
+    - `AWS::StackName`
+    - `AWS::AccountId`
+  - Pseudo parameters are parameters which can not be populated by us, they are populated by AWS and provided for us to reference them
 - Parameters provide portability for the template
+
+  ![PseudoParameters](images/PseudoParameters.png)
+
 - Best practice:
-    - Minimize number of parameters and provide defaults where applicable
-    - Use pseudo parameters where possible
+  - Minimize number of parameters and provide defaults where applicable
+  - Use pseudo parameters where possible
 
 ## Intrinsic Functions
 
 - Intrinsic functions can be used in templates to assign values to properties that are not available until runtime
 - Examples of functions:
-    - `Ref` and `Fn::GetAtt`: reference a value from one logical resource
-    - `Fn::Join` and `Fn::Split`: join/split strings to create new ones
-    - `Fn::GetAZs` and `Fn::Select`: get availability zones in a regions and select one
-    - Conditions: `Fn::IF`, `And`, `Equals`, `Not`, `Or`
-    - `Fn::Base64` and `Fn::Sub`: encode strings to base64, substitute replacement on variables in the text
-    - `Fn:Cidr`: build CIDR blocks
+  - `Ref` and `Fn::GetAtt`: reference a value from one logical resource
+  - `Fn::Join` and `Fn::Split`: join/split strings to create new ones
+  - `Fn::GetAZs` and `Fn::Select`: get availability zones in a regions and select one
+  - Conditions: `Fn::IF`, `And`, `Equals`, `Not`, `Or`
+  - `Fn::Base64` and `Fn::Sub`: encode strings to base64, substitute replacement on variables in the text
+  - `Fn:Cidr`: build CIDR blocks
 - `Fn::GetAZs` - returns the available AZs in region. If the region has a default VPC configured, it return the AZs which are available in the default VPC
+  ![FnGetAtt](images/FnGetAtt.png)
+  ![FnSelect](images/FnSelect.png)
+  ![FnJoinSplit](images/FnJoinSplit.png)
+  ![FnBase64](images/FnBase64.png)
+  ![FnCidr](images/FnCidr.png)
 
 ## Mappings
 
-- Templates can contain a `Mappings` objects which can contain keys to values objects
-- Mappings can have one level or tep and second level keys
+- Templates can contain a `Mappings` objects which can contain many mappings
+- A mapping maps keys to values, allowed lookup
+- Mappings can have one key or top & second level keys
 - Mappings use another intrinsic function `Fn::FindInMap`
-- Mappings are used to improve template portability
+- Mappings => improve template portability
 - Example:
-    ```
-    Mappings:
-        RegionMap:
-            us-east-1:
-                HVM64: 'ami-xxx'
-                HVMG2: 'ami-yyy'
-            us-east-2:
-                HVM64: 'ami-zzz'
-                HVMG2: 'ami-vvv'
-    ```
+
+  ```
+  Mappings:
+      RegionMap:
+          us-east-1:
+              HVM64: 'ami-xxx'
+              HVMG2: 'ami-yyy'
+          us-east-2:
+              HVM64: 'ami-zzz'
+              HVMG2: 'ami-vvv'
+      ...
+  ```
+
+  ![Mappings](images/Mappings.png)
 
 ## Outputs
 
 - The `Outputs` section in a template is optional
 - We can declare values in this section which will be visible as output in the CLI/Console
-- Output will be accessible from a parent stack when using nesting
+- Output will be **accessible from a parent stack** when using nesting
 - Outputs can be exported allowing cross-stack references
 - Example:
-    ```
-    Outputs:
-        WordPressUrl:
-            Description: 'description text'
-            Value: !Join['', 'https://', !GetAtt Instance.DNSName]
-    ```
+  ```
+  Outputs:
+      WordPressUrl:
+          Description: 'description text'
+          Value: !Join['', 'https://', !GetAtt Instance.DNSName]
+      ...
+  ```
 
 ## Conditions
 
@@ -99,12 +117,12 @@
 - Any resource can have associated a condition which will define if the resource will be created or not
 - Examples: we can have conditions which evaluate based on the environment (dev, test, prod) in which the template is executed
 - Condition example:
-    ```
-    Conditions:
-        IsProd: !Equals
-            - !Ref EnvType
-            - `prod`
-    ```
+  ```
+  Conditions:
+      IsProd: !Equals
+          - !Ref EnvType
+          - `prod`
+  ```
 - Conditions can be nested
 
 ## DependsOn
@@ -133,16 +151,16 @@
 
 - Most simple projects will generally utilize a CFN stack
 - Stacks can have limits:
-    - Resource limit: 500 resources per stack
-    - We can't easily reuse resources, example reference a VPC
+  - Resource limit: 500 resources per stack
+  - We can't easily reuse resources, example reference a VPC
 - There are 2 ways to architect multi-stack projects:
-    - Nested Stacks
-    - Cross-Stack References
+  - Nested Stacks
+  - Cross-Stack References
 - Nested Stacks:
-    - Root Stack: the stack which is created first, created manually or using some automation
-    - A Parent Stack is the parent of any stack which it immediately creates
-    - A root stack can create nested stacks having several parent stacks
-    - A root stack can have parameters and outputs (just like a normals stack)
+  - Root Stack: the stack which is created first, created manually or using some automation
+  - A Parent Stack is the parent of any stack which it immediately creates
+  - A root stack can create nested stacks having several parent stacks
+  - A root stack can have parameters and outputs (just like a normals stack)
 - A stack can have another CFN stack as a resource using `AWS::CloudFormation::Stack` type which needs an url to the template
 - We can provide input values to the nested stacks. We need to supply values to any parameters from a nested stack if the parameter does not have a default value defined
 - Any outputs of a nested stack are returned to the root stack which can be referenced as `NESTEDStack.Outputs.XXX`
@@ -168,12 +186,12 @@
 - Each stack created by a StackSet is a stack created in one region in one account
 - Security: we can use self-managed roles or service-managed roles (everything handled by the product). CFN will assume a role to interact with the target accounts
 - Terminology:
-    - Concurrent Accounts: a value specifying how in how many accounts can we deploy at the same time
-    - Failure Tolerance: amount of individual deployments which can fail before declaring the StackSet itself as failed
-    - Retain Stacks: remove stack instances from a StackSet but retain the infrastructure
+  - Concurrent Accounts: a value specifying how in how many accounts can we deploy at the same time
+  - Failure Tolerance: amount of individual deployments which can fail before declaring the StackSet itself as failed
+  - Retain Stacks: remove stack instances from a StackSet but retain the infrastructure
 - StackSet use cases:
-    - Crate AWS Config Rules
-    - Create IAM Roles for cross-account access
+  - Crate AWS Config Rules
+  - Create IAM Roles for cross-account access
 
 ## DeletionPolicy
 
@@ -219,7 +237,7 @@
 - Custom Resources let CFN integrate with anything it does not yet support or wont support at all
 - With Custom Resources we can extend CFN to do things which it does not natively support (example: fet configuration from a third party)
 - Architecture of custom resources:
-    - CFN sends data to an endpoint defined in the custom resource
-    - This endpoint might be a Lambda function or an SNS topic
-    - When a custom resources is created/update/deleted, CFN sends events to this endpoint containing the operation and any additional property information
-    - The compute (Lambda function) can respond to this custom data, letting it know of the success/failure of its execution
+  - CFN sends data to an endpoint defined in the custom resource
+  - This endpoint might be a Lambda function or an SNS topic
+  - When a custom resources is created/update/deleted, CFN sends events to this endpoint containing the operation and any additional property information
+  - The compute (Lambda function) can respond to this custom data, letting it know of the success/failure of its execution
