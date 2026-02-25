@@ -8,3 +8,5 @@
 - In EventBridge we can have additional event buses
 - In both systems we create rules matching incoming events, or we have scheduled based rules
 - Events themselves are JSON objects, including for example which EC2 instance changed state, in what state changed into as well as other things such as date and time
+
+![EventBridge](images/EventBridge.png)

@@ -170,6 +170,8 @@
 - Libraries in layers are extracted in the `/opt` folder
 - Layers allow new runtimes which are not explicitly supported by AWS
 
+![Lambda Layers](images/LambdaLayers.png)
+
 ## Lambda Container Images
 
 - Until recently Lambda was considered to be a Function as a Service (FaaS) product, which means creation of a function, uploading code and executing it
@@ -179,12 +181,17 @@
 - Lambda Runtime API - has to be included with the container images, it is a package which allows interaction between a container and the Lambda
 - AWS Lambda Runtime Interface Emulator (RIE): used for local Lambda testing
 
+![Lambda Container](images/LambdaContainer.png)
+
 ## Lambda and ALB
 
 - Lambda functions can be registered to ALB target groups
 - Communication between the user and the ALB is via HTTP/HTTPS, there is no difference than connecting to a classic server (EC2) from the user's perspective
 - When the ALB receives a request from the client it synchronously invokes the Lambda function
 - The LB passes in a JSON structure to the Lambda function, inside the `Event` structure. This has to be interpreted by the Lambda. What actually happens is that the LB translates the HTTP(S) request to a Lambda compatible event, to which the Lambda answers with a JSON object that gets translated back to HTTP/HTTPS response
+
+![Lambda ALB](images/LambdaALB.png)
+
 - Multi-Value headers:
   - For an example lets us this URL for the Lambda: http://catagram.io?&search=roffle&search=winkie
   - Without multi-value headers the Lambda receives the following:
@@ -194,8 +201,11 @@
     }
     ```
   - If the multi-value headers are enabled, we get this delivered to Lambda:
+
     ```
     "multiValueQueryStringParameters": {
         "search": ["roffle", "winkie"]
     }
     ```
+
+    ![Lambda Multi-value](images/LambdaMultiValue.png)
